@@ -1,0 +1,108 @@
+---
+apiVerion: apps/v1
+kind: Deployment
+metadata:
+  name: front-end
+  labels:
+    type: front
+specs:
+  replicas: 3
+  selector:
+    matchLabels:
+      type: front
+  template:
+    metadata:
+      labels: front
+    spec: 
+      containers:
+        - name: front
+          image: 
+          ports: 
+            - containerport: 3000
+---
+apiVerion: apps/v1
+kind: Deployment
+metadata:
+  name: back-end
+  labels:
+    type: back
+specs:
+  replicas: 4
+  selector:
+    matchLabels:
+      type: back
+  template:
+    metadata:
+      labels: back
+    spec: 
+      containers:
+        - name: back
+          image: 
+          ports: 
+            - containerport: 4000
+
+---
+
+apiVerion: apps/v1
+kind: Deployment
+metadata:
+  name: Database
+  labels:
+    type: Database
+specs:
+  selector:
+    matchLabels:
+      type: Database
+  template:
+    metadata:
+      labels: Database
+    spec: 
+      containers:
+        - name: Database
+          image: mongo:4.2.8
+      env:
+        - name: MONGO_INITDB_DATABASE
+          value: "admin"
+        - name: MONGO_INITDB_ROOT_USERNAME
+          value: "admin"
+        - name: MONGO_INITDB_ROOT_PASSWORD
+          value: "123456"
+
+---
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: backend-svc
+spec:
+  type: NodePort
+  ports:
+  - port: 4000
+  selector:
+    type: back
+
+---
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: frontend-svc
+spec:
+  type: NodePort
+  ports:
+  - port: 3000
+  selector:
+    type: front
+
+---
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: database-svc
+spec:
+  ports:
+  - port: 27017
+  selector:
+    type: Database
+
