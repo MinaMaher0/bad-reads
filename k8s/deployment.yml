@@ -1,72 +1,75 @@
 ---
-apiVerion: apps/v1
+apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: front-end
   labels:
-    type: front
-specs:
+    type: front-dep
+spec:
   replicas: 3
   selector:
     matchLabels:
       type: front
   template:
     metadata:
-      labels: front
+      labels: 
+        type: front
     spec: 
       containers:
         - name: front
-          image: 
+          image: minamaher0/frontend-nodejs:ingress1
           ports: 
-            - containerport: 3000
+            - containerPort: 3000
 ---
-apiVerion: apps/v1
+apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: back-end
   labels:
-    type: back
-specs:
+    type: back-dep
+spec:
   replicas: 4
   selector:
     matchLabels:
       type: back
   template:
     metadata:
-      labels: back
+      labels: 
+        type: back
     spec: 
       containers:
         - name: back
-          image: 
+          image: kareemelkasaby/badreads-backend:latest
           ports: 
-            - containerport: 4000
+            - containerPort: 4000
 
 ---
 
-apiVerion: apps/v1
+apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: Database
+  name: database
   labels:
-    type: Database
-specs:
+    type: database-dep
+spec:
   selector:
     matchLabels:
-      type: Database
+      type: database
   template:
     metadata:
-      labels: Database
+      labels: 
+        type: database
     spec: 
       containers:
-        - name: Database
+        - name: database
           image: mongo:4.2.8
-      env:
-        - name: MONGO_INITDB_DATABASE
-          value: "admin"
-        - name: MONGO_INITDB_ROOT_USERNAME
-          value: "admin"
-        - name: MONGO_INITDB_ROOT_PASSWORD
-          value: "123456"
+          env:
+            - name: MONGO_INITDB_DATABASE
+              value: "admin"
+            - name: MONGO_INITDB_ROOT_USERNAME
+              value: "admin"
+            - name: MONGO_INITDB_ROOT_PASSWORD
+              value: "123456"
 
 ---
 
@@ -77,7 +80,9 @@ metadata:
 spec:
   type: NodePort
   ports:
-  - port: 4000
+  - protocol: TCP
+    port: 80
+    targetPort: 4000
   selector:
     type: back
 
@@ -90,7 +95,9 @@ metadata:
 spec:
   type: NodePort
   ports:
-  - port: 3000
+  - protocol: TCP
+    port: 80
+    targetPort: 3000
   selector:
     type: front
 
@@ -99,10 +106,31 @@ spec:
 apiVersion: v1
 kind: Service
 metadata:
-  name: database-svc
+  name: mongo
 spec:
   ports:
   - port: 27017
   selector:
-    type: Database
+    type: database
 
+---
+apiVersion: extensions/v1beta1
+kind: Ingress
+metadata:
+  name: ingress
+spec:
+  rules:
+  - host: front.minamaher.codes
+    http:
+      paths:
+      - path: /
+        backend:
+          serviceName: frontend-svc
+          servicePort: 80
+  - host: back.minamaher.codes
+    http:
+      paths:
+      - path: /
+        backend:
+          serviceName: backend-svc
+          servicePort: 80
